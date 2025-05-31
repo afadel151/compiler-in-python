@@ -169,28 +169,14 @@ def p_empty(p):
 
 def p_error(p):
     print("not accepted")
-    #raise SyntaxError(f"Syntax error '{p.value}' in line {p.lineno}")
 
 def parse(program):
-    # Create a string buffer to capture the output
     output_buffer = io.StringIO()
-
-    # Redirect the standard output to the buffer
     sys.stdout = output_buffer
-
-    # Call yacc.parse to parse the program
     result = yacc.parse(program)
-
-    # Restore the standard output
     sys.stdout = sys.__stdout__
-
-    # Get the output as a string
     output = output_buffer.getvalue()
-
-    # Close the buffer
     output_buffer.close()
-
-    # Return the parsed result and the captured output
     return result, output
 
 import sys
