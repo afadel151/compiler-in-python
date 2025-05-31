@@ -1,154 +1,160 @@
 import ply.lex as lex
 import sys
+import os
 
-#les lexemes simples
-t_ADD_OP=r'\+|\-'
-t_MUL_OP=r'\*|/'
-t_LPAREN=r'\('
-t_RPAREN=r'\)'
-t_LBRACE = r'{'
-t_RBRACE = r'}'
-t_AND=r'&'
-t_OR=r'\|'
-t_ignore_COMMENT = r'\#.*' #t_ignore reserver par lex.py pour ignore les trucs specifier
-t_POINT_VIRG = r';'
-t_BLANC = r'\s' #definie mais non ajouter a la liste des tokens pour les ignoré
-t_ASSIGNMENT = r'='
-t_EQUAL = r'=='
-t_INEQUAL = r'!='
-t_GREATER = r'>'
-t_LESS = r'<'
-t_GREATER_EQUAL = r'>='
-t_LESS_EQUAL = r'<='
-t_LBRACKET = r'\['
-t_RBRACKET = r'\]'
-t_CHARACTER = r'\'[^\']*\''
-t_STRING = r"\'[^\"]*\'"
-t_COMMA = r','
-t_NOT = r'!'
-#t_MODULO = r'%'
-t_ignore = ' \t\n'
-#t_DEUX_PTS = r':'
-#t_DUBLE_QUOTE = r'\"'
-#t_QUOTE = r"\'"
-#t_LIBRARY_NAME = r'\w +'
-t_ARRAY = r'\[[^\]]*\]'
+# Liste des noms des tokens
+tokens = (
+    'ENTIER',
+    'ID',
+    'NUMBER',
+    'MINUS', 
+    'PLUS',
+    'MULTIPLIE',
+    'NOT_EQUAL',
+    'DIVISE',
+    'EGAL',
+    'INF',
+    'SUP',
+    'ET',
+    'OU',
+    'NON',
+    'SI',
+    'ALORS',
+    'RETOUR',
+    'TANTQUE',
+    'FAIRE',
+    'SINON',
+    'LIRE',
+    'ECRIRE',
+    'PAR_OUV',
+    'STRING',
+    'ASSIGN',
+    'PAR_FER',
+    'ACCO_OUV',
+    'ACCO_FER',
+    'CROCH_OUV',
+    'VIRGULE',
+    'POINT_VIRGULE',
+    'MAIN',  
+    'CROCH_FER',
+    'GREATERTHENEQUAL', 
+    'LESSTHENEQUAL'
+)
 
-#t_VIRGULE= '\.'
 
-current_line = 1
-reserved = {
-    'main' : 'MAIN',
-    'ecrire' : 'ECRIRE',
-    'lire' : 'LIRE',
-    'print' : 'PRINT',
-    'if' : 'IF',
-    'si' : 'SI',
-    'alors' : 'ALORS_MIN',
-    'Alors' : 'ALORS_MAJ',
-    'sinon' : 'SINON',
-    'then' : 'THEN',
-    'else' : 'ELSE',
-    'while' : 'WHILE',
-    'tantque' : 'TANTQUE',
-    #'for' : 'FOR',
-    #'do' : 'DO',
-    #'switch' : 'SWITCH',
-    #'case' : 'CASE',
-    #'default' : 'DEFAULT',
-    #'break' : 'BREAK',
-    #'continue' : 'CONTINUE',
-    'retour' : 'RETOUR',
-    #'struct' : 'STRUCT',
-    'function' : 'FUNCTION',
-    'entier' : 'ENTIER',
-    'faire' : 'FAIRE'
+# Expressions régulières pour les tokens
+t_PLUS = r'\+'
+t_MINUS = r'-'
+t_MULTIPLIE = r'\*'
+t_NOT_EQUAL= r'<>'
+t_DIVISE = r'/'
+t_EGAL = r'=='
+t_INF = r'<'
+t_SUP= r'>'
+t_ET = r'&'
+t_OU = r'\|'
+t_MAIN = r'^main\b'
+t_NON = r'!'
+t_SI = r'si\b'
+t_ALORS = r'alors\b'
+t_RETOUR = r'^retour\b'
+t_TANTQUE = r'^tantque\b'
+t_FAIRE = r'faire\b'
+t_SINON = r'sinon\b'
+t_LIRE = r'^lire\b'
+t_ECRIRE = r'^ecrire\b'
+t_ENTIER = r'^entier\b'
+t_PAR_OUV = r'\('
+t_PAR_FER = r'\)'
+t_ACCO_OUV = r'\{'
+t_ACCO_FER = r'\}'
+t_CROCH_OUV = r'\['
+t_CROCH_FER = r'\]'
+t_VIRGULE = r','
+t_POINT_VIRGULE = r';'
+t_GREATERTHENEQUAL= r'>='
+t_LESSTHENEQUAL=r'<='
+t_STRING = r'\'.*\''
+t_ASSIGN = r'='
+    
+
+    # Fonction pour les identificateurs
+def t_ID(t):
+    r'[a-zA-Z][a-zA-Z0-9_-]*'
+    keywords  = {
+        'si': 'SI',
+        'alors': 'ALORS',
+        'sinon': 'SINON',
+        'tantque': 'TANTQUE',
+        'faire': 'FAIRE',
+        'retour': 'RETOUR',
+        'lire': 'LIRE',
+        'ecrire': 'ECRIRE',
+        'main'  : 'MAIN',
+        'entier': 'ENTIER'
     }
-
-tokens = [
-        'ADD_OP', 
-        'MUL_OP',
-        'NUMBER',
-        'ID',          
-        'newline',
-        'LPAREN',
-        'RPAREN',
-        'LBRACE',
-        'RBRACE',
-        'AND',
-        'OR',
-        'ignore_COMMENT',
-        'POINT_VIRG',
-        'BLANC',
-        'ASSIGNMENT',
-        'EQUAL',
-        'INEQUAL',
-        'GREATER',
-        'LESS',
-        'GREATER_EQUAL',
-        'LESS_EQUAL',
-        'LBRACKET',
-        'RBRACKET',
-        'CHARACTER',
-        'STRING',
-        'COMMA',
-        'NOT',
-        'ARRAY'
-        ] + list(reserved.values())
-
-
-def t_NUMBER(token):
-    r'\d+(\.\d+)?'
-    if '.' not in token.value:
-        token.value = int(token.value)
+    if t.value.lower() in keywords:
+        t.type = t.value.upper()
     else:
-        token.value = float(token.value)
-    return token
+        t.type = 'ID'
+    return t
+def t_NOMBRE_SUIVI_IDENTIFICATEUR(t):
+    r'\d+[a-zA-Z_][a-zA-Z0-9_]*'
+    #print("Erreur : nombre suivi immédiatement d'un identificateur '%s'" % t.value)
+    t.lexer.skip(len(t.value))
+    print ("not accepted")
+    exit(1)
 
 
-def t_newline(token):
+def t_NUMBER(t):
+    r'\d+'
+    t.value = int(t.value)
+    return t
+def t_ignore_COMMENTAIRE(t):
+    r'\#.*'
+    pass
+
+# Caractères à ignorer
+t_ignore = " \t"
+
+def t_newline(t):
     r'\n+'
-    token.lexer.lineno += len(token.value)   
+    t.lexer.lineno += len(t.value)
 
-def t_ID(token):
-    r'[a-zA-Z_][a-zA-Z_0-9]*'
-    token.type = reserved.get(token.value,'ID')   
-    token.lineno = current_line
-    return token
+def t_error(t):
+    #print("Illegal character '%s'" % t.value[0])
+    t.lexer.skip(1)
+    print ("not accepted")
+    exit(1)
 
-def find_column(input, token):
-    line_start = input.rfind('\n', 0, token.lexpos) + 1
-    return (token.lexpos - line_start) + 1
 
-def t_error(token):
-    global success
-    print("Erreur de syntaxe : '%s', ligne %d" % (token.value[0], current_line))
-    success = -1
-    token.lexer.skip(1)
-
-def open_file(f):
-    with open(f, 'r') as file:
-        f=(file.read())
-    return f
-
-success = 1
-lex_analyser = lex.lex()
-if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print("Error: missing file argument")
+# Fonction pour lire un fichier
+def read_file(filename):
+    if not os.path.isfile(filename):
+        print("Erreur : Le fichier", filename, "n'existe pas.")
         sys.exit(1)
-    f = sys.argv[1]
-    program =open_file(f)
-    print(program)
+    with open(filename, 'r') as file:
+        content = file.read()
+    return content
 
-    lex.input(program)
+# Création de l'analyseur lexical
+lexer = lex.lex()
+
+if __name__ == '__main__':
+    # Vérification des arguments en ligne de commande
+    if len(sys.argv) != 2:
+        print("Erreur : fichier manquant en argument")
+        sys.exit(1)
+    
+    filename = sys.argv[1]
+    prog = read_file(filename)
+    
+    # Utilisation de l'analyseur lexical sur le contenu du fichier
+    lexer.input(prog)
     while True:
-        current_t = lex_analyser.token()
-        if not current_t:
-            break 
-        print(current_t)
-    if success > 0:
-        print("ACCEPTE")
-    else:
-        print("REFUSE")
+        tok = lexer.token()
+        if not tok:
+            break  # Plus d'entrée
 
+       
+    print("accepted")

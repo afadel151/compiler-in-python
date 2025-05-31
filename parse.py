@@ -168,7 +168,7 @@ def p_empty(p):
     '''empty :'''
 
 def p_error(p):
-    print("not accepted")
+    print('not accepted')
     #raise SyntaxError(f"Syntax error '{p.value}' in line {p.lineno}")
 
 def parse(program):

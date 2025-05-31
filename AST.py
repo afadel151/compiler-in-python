@@ -1,10 +1,7 @@
-# coding: latin-1
 import pydot
-
 class Node:
     count = 0
     type = 'Node (unspecified)'
-    shape = 'ellipse'
     def __init__(self,children=None):
         self.ID = str(Node.count)
         Node.count+=1
@@ -36,7 +33,7 @@ class Node:
     
     def makegraphicaltree(self, dot=None, edgeLabels=True):
             if not dot: dot = pydot.Dot()
-            dot.add_node(pydot.Node(self.ID,label=repr(self), shape=self.shape))
+            dot.add_node(pydot.Node(self.ID,label=repr(self), shape="diamond"))
             label = edgeLabels and len(self.children)-1
             for i, c in enumerate(self.children):
                 c.makegraphicaltree(dot, edgeLabels)
@@ -44,47 +41,37 @@ class Node:
                 if label:
                     edge.set_label(str(i))
                 dot.add_edge(edge)
-                #Workaround for a bug in pydot 1.0.2 on Windows:
-                #dot.set_graphviz_executables({'dot': r'C:\Program Files\Graphviz2.16\bin\dot.exe'})
             return dot
         
-    def threadTree(self, graph, seen = None, col=0):
-            colors = ('red', 'green', 'blue', 'yellow', 'magenta', 'cyan')
+    def threadTree(self, graph, seen = None, coul=0):
+            colors = ('black', 'red', 'red', 'red', 'red', 'red')
             if not seen: seen = []
             if self in seen: return
             seen.append(self)
             new = not graph.get_node(self.ID)
             if new:
-                graphnode = pydot.Node(self.ID,label=repr(self), shape=self.shape)
+                graphnode = pydot.Node(self.ID,label=repr(self), shape="diamond")
                 graphnode.set_style('dotted')
                 graph.add_node(graphnode)
             label = len(self.next)-1
             for i,c in enumerate(self.next):
                 if not c: return
-                col = (col + 1) % len(colors)
-                color = colors[col]                
-                c.threadTree(graph, seen, col)
+                coul = (coul + 1) % len(colors)
+                color = colors[coul]
+                c.threadTree(graph, seen, coul)
                 edge = pydot.Edge(self.ID,c.ID)
                 edge.set_color(color)
-                edge.set_arrowsize('.5')
-                # Les arrêtes correspondant aux coutures ne sont pas prises en compte
-                # pour le layout du graphe. Ceci permet de garder l'arbre dans sa représentation
-                # "standard", mais peut provoquer des surprises pour le trajet parfois un peu
-                # tarabiscoté des coutures...
-                # En commantant cette ligne, le layout sera bien meilleur, mais l'arbre nettement
-                # moins reconnaissable.
+                edge.set_arrowsize('0.8')
                 edge.set_constraint('false') 
                 if label:
                     edge.set_taillabel(str(i))
                     edge.set_labelfontcolor(color)
                 graph.add_edge(edge)
             return graph    
-        
+
+
 class ProgramNode(Node):
     type = 'Program'
-
-class MainNode(Node):
-    type = 'main'
         
 class TokenNode(Node):
     type = 'token'
@@ -94,8 +81,11 @@ class TokenNode(Node):
         
     def __repr__(self):
         return repr(self.tok)
-    
-class OpNode(Node):
+
+class BlockNode(Node):
+    type = 'Block'
+
+class BinOpNode(Node):
     def __init__(self, op, children):
         Node.__init__(self,children)
         self.op = op
@@ -107,32 +97,40 @@ class OpNode(Node):
     def __repr__(self):
         return "%s (%s)" % (self.op, self.nbargs)
     
+class FunctionNode(Node):
+    def __init__(self, name, children):
+        Node.__init__(self,children)
+        self.name = name
+        
+    def __repr__(self):
+        return "%s" % (self.name)
+
+class ReturnNode(Node):
+    type = 'return'
+
 class AssignNode(Node):
     type = '='
     
 class PrintNode(Node):
     type = 'print'
     
-class ReadNode(Node):
-    type = 'read'
-    
 class WhileNode(Node):
     type = 'while'
 
-class IfNode(Node):
-    type = 'if'
-    
-class ReturnNode(Node):
-    type = 'return'
+class IfElseNode(Node):
+    type = 'if-else'
 
+class ReadNode(Node):
+    type = 'read'
     
 class EntryNode(Node):
     type = 'ENTRY'
     def __init__(self):
         Node.__init__(self, None)
-    
+
+
+
 def addToClass(cls):
-   
     def decorator(func):
         setattr(cls,func.__name__,func)
         return func
