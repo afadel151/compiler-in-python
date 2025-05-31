@@ -36,12 +36,7 @@ t_ARRAY = r'\[[^\]]*\]'
 
 #t_VIRGULE= '\.'
 
-
-
 current_line = 1
-
-
-#Instruction
 reserved = {
     'main' : 'MAIN',
     'ecrire' : 'ECRIRE',
@@ -100,60 +95,60 @@ tokens = [
         'NOT',
         'ARRAY'
         ] + list(reserved.values())
-###############################################################################
-def t_NUMBER(t):
-    r'\d+(\.\d+)?'   # mettre à jour la règle pour reconnaître les nombres flottants
-    if '.' not in t.value:
-        t.value = int(t.value)
+
+
+def t_NUMBER(token):
+    r'\d+(\.\d+)?'
+    if '.' not in token.value:
+        token.value = int(token.value)
     else:
-        t.value = float(t.value)
-    return t
-###############################################################################
-def t_newline(t):
+        token.value = float(token.value)
+    return token
+
+
+def t_newline(token):
     r'\n+'
-    t.lexer.lineno += len(t.value)   
-###############################################################################
-#afin de comparer si c'est un ID ou un mot qui appartient a reserved list
-def t_ID(t):
+    token.lexer.lineno += len(token.value)   
+
+def t_ID(token):
     r'[a-zA-Z_][a-zA-Z_0-9]*'
-    t.type = reserved.get(t.value,'ID')    # Check for reserved words
-    t.lineno = current_line
-    return t
-###############################################################################
+    token.type = reserved.get(token.value,'ID')   
+    token.lineno = current_line
+    return token
+
 def find_column(input, token):
     line_start = input.rfind('\n', 0, token.lexpos) + 1
     return (token.lexpos - line_start) + 1
-###############################################################################
-def t_error(t):
-    global success_value
-    print("Erreur de syntaxe : '%s', ligne %d" % (t.value[0], current_line))
-    success_value = -1
-    t.lexer.skip(1)
-###############################################################################
-def read_file(filename):
-    with open(filename, 'r') as file:
+
+def t_error(token):
+    global success
+    print("Erreur de syntaxe : '%s', ligne %d" % (token.value[0], current_line))
+    success = -1
+    token.lexer.skip(1)
+
+def open_file(f):
+    with open(f, 'r') as file:
         f=(file.read())
     return f
-###############################################################################
-success_value = 1
-lexer= lex.lex()
+
+success = 1
+lex_analyser = lex.lex()
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print("Error: missing file argument")
         sys.exit(1)
-    filename = sys.argv[1]
-    prog =read_file(filename)
-    print(prog)
+    f = sys.argv[1]
+    program =open_file(f)
+    print(program)
 
-
-    # lex.input( prog )
-    # while True:
-    #     tok = lexer.token()
-    #     if not tok:
-    #         break # No more input
-    #     print(tok)
-    # if success_value > 0:
-    #     print("ACCEPTE")
-    # else:
-    #     print("REFUSE")
+    lex.input(program)
+    while True:
+        current_t = lex_analyser.token()
+        if not current_t:
+            break 
+        print(current_t)
+    if success > 0:
+        print("ACCEPTE")
+    else:
+        print("REFUSE")
 

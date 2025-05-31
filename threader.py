@@ -57,5 +57,5 @@ if __name__ == "__main__":
     
     
     name = f"ABR/prog.png"
-    graph.write_png( name )
+    graph.write_png(name)
     print( "wrote threaded ast to" , name)
